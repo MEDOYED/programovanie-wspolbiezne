@@ -1,54 +1,108 @@
-# Lab 1 - Concurrent Programming
+# Laboratorium 1 - Programowanie współbieżne
 
-## How to run
+## Co robi ten program?
+
+To prosty program w języku Go, który pokazuje jak działają wątki (goroutines). Program działa przez 30 sekund i pokazuje jak różne wątki mogą współdzielić dane.
+
+## Jak to działa?
+
+Program ma 4 wątki, które pracują jednocześnie:
+
+### 1. Pierwszy Producent (Writer #1)
+- Losuje liczby od 21 do 37
+- Zapisuje je do wspólnego bufora
+- Czeka losowy czas (400-1200ms) między operacjami
+
+### 2. Drugi Producent (Writer #2)
+- Losuje liczby od 1337 do 4200
+- Zapisuje je do wspólnego bufora
+- Czeka losowy czas (400-1200ms) między operacjami
+
+### 3. Konsument (Reader #1)
+- Odczytuje liczby z bufora
+- Dodaje je do sumy
+- Wypisuje aktualną sumę
+- Czeka 150ms między próbami odczytu
+
+### 4. Monitor
+- Co 1 sekundę wypisuje raport:
+  - Jaka wartość jest teraz w buforze
+  - Który wątek ostatnio zapisał
+  - Który wątek ostatnio odczytał
+  - Ile operacji zostało wykonanych
+
+## Jak uruchomić?
 
 ```bash
-nix develop
 go run main.go
 ```
 
-Program runs for 30 seconds and then stops all threads automatically.
+Program automatycznie zatrzyma się po 30 sekundach.
 
----
+## Co zobaczysz?
 
-## Questions
+W konsoli zobaczysz:
+- Komunikaty od producentów, którzy zapisują liczby
+- Komunikaty od konsumenta, który czyta liczby i pokazuje sumę
+- Co sekundę raport ze stanu bufora
 
-### What's the difference between PID and TID?
+## Ważne szczegóły techniczne
 
-PID (Process ID) is the ID of the whole program. TID (Thread ID) is the ID of a single thread inside that program. One program can have many threads, so one PID can have many TIDs.
+### Synchronizacja
+Program używa:
+- **Kanałów (channels)** - do bezpiecznego przekazywania danych między wątkami
+- **Mutex (RWMutex)** - do ochrony informacji o stanie bufora
+- **Context** - do kontrolowania czasu działania programu
 
-### What's the difference between a user thread and a daemon thread?
+### Nazewnictwo wątków
+Każdy wątek ma nazwę w formacie: `121261#Writer#1`
+- `121261` - numer indeksu studenta
+- `Writer/Reader/Monitor` - typ wątku
+- `1` - numer wątku
 
-User threads keep the program alive - the program waits for them to finish before closing. Daemon threads don't keep the program alive - if only daemon threads are left, the program can close and kill them. In Go we don't have daemon threads, we use context to stop goroutines instead.
+## Odpowiedzi na pytania teoretyczne
 
-### Is it bad to not name your threads?
+### Różnica między PID a TID
+- **PID (Process ID)** - to numer całego programu w systemie
+- **TID (Thread ID)** - to numer konkretnego wątku w programie
 
-Yes, it's bad practice. Named threads make debugging easier because you can see which thread is doing what in the logs. Without names everything looks the same and it's hard to find problems.
+Jeden program (PID) może mieć wiele wątków (TID).
 
-### How important is thread priority?
+### Wątek użytkownika vs wątek demoniczny
+- **Wątek użytkownika** - program czeka aż się skończy przed zamknięciem
+- **Wątek demoniczny** - zostaje zabity gdy główny program się kończy
 
-Not very important in most cases. The operating system decides which thread gets to run anyway, regardless of the priority you set. It can be useful in real-time systems or when one thread needs to respond quickly, but using it wrong can cause problems. Go doesn't let you set priority - it manages goroutines automatically.
+Wątki demoniczne są przydatne do zadań w tle, które nie są krytyczne.
 
-### What is a monitor in multithreading?
+### Czy nazywać wątki?
+**Tak, to dobra praktyka!** Nazwy pomagają:
+- Znaleźć błędy w programie
+- Zobaczyć co się dzieje w logach
+- Debugować program
 
-A monitor is a way to synchronize threads. It combines two things: a lock (so only one thread can access shared data at a time) and condition variables (so threads can wait and wake each other up). In Java you use `synchronized` with `wait()` and `notify()`. In Go you use `sync.Mutex` with `sync.Cond`. In this program the DataBuffer structure works as a monitor.
+### Priorytet wątku
+Priorytet jest **mało ważny** w większości programów, bo:
+- System sam decyduje jak przydzielać czas
+- W Go nie możemy bezpośrednio ustawiać priorytetów
+- Lepiej skupić się na dobrej synchronizacji
 
----
+### Czym jest monitor?
+Monitor to mechanizm synchronizacji, który:
+- Chroni współdzielone dane
+- Pozwala tylko jednemu wątkowi na dostęp naraz
+- W Go to jest **Mutex** lub kanały (channels)
 
-## Implementation
+## Struktura kodu
 
-The program uses the producer-consumer pattern with 4 goroutines:
+```
+lab_1/
+├── main.go      - cały kod programu
+├── lab1.pdf     - treść zadania
+└── README.md    - ten plik
+```
 
-- **T1 (121261#Writer#1)**: Writes random numbers from [21-37]
-- **T2 (121261#Writer#2)**: Writes random numbers from [1337-4200]
-- **T3 (121261#Reader#1)**: Reads values and adds them up
-- **T4 (121261#Monitor#1)**: Shows system status every second
+## Technologie
 
-### Synchronization:
-
-- Channel - passes data between threads
-- `sync.RWMutex` - protects shared status information
-- `context.Context` - controls when goroutines should stop (after 30 seconds)
-- `sync.WaitGroup` - waits for all goroutines to finish
-
-The program runs for exactly 30 seconds, then all goroutines stop cleanly.
+- **Język**: Go (Golang)
+- **Współbieżność**: Goroutines + Channels
+- **Synchronizacja**: sync.RWMutex, context.Context
