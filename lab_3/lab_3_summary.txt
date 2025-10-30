@@ -1,0 +1,77 @@
+=================================================================
+              LABORATORIUM 3 - WYKONANIE ZADANIA
+=================================================================
+
+ZADANIE:
+--------
+Napisac program, ktory zlicza laczna liczbe slow znajdujacych sie
+we wszystkich plikach tekstowych, korzystajac z rownoleglego
+przetwarzania.
+
+IMPLEMENTACJA:
+--------------
+- Jezyk: Go (Golang)
+- Mechanizm rownoleglосci: Goroutines + Channels
+- Architektura: Worker Pool Pattern
+- Liczba workerow: 8
+
+KOMPONENTY:
+-----------
+1. WorkerPool - zarzadza pula goroutines
+2. Channels:
+   - jobs: kanal do przesylania sciezek plikow
+   - results: kanal do zbierania wynikow
+3. sync.WaitGroup - synchronizacja zakonczenia workerow
+4. atomic.AddInt32 - bezpieczne przydzielanie ID workerom
+
+WYNIKI TESTOWE:
+---------------
+Folder: texts/
+Liczba plikow: 50,000
+Laczna liczba slow: 274,824,047
+Czas wykonania: ~30 sekund
+Rozmiar logu: 1.8 MB
+
+ROZDZIELENIE PRACY:
+-------------------
+Worker-1: 6,385 plikow
+Worker-2: 6,501 plikow
+Worker-3: 6,086 plikow
+Worker-4: 6,129 plikow
+Worker-5: 6,314 plikow
+Worker-6: 6,294 plikow
+Worker-7: 6,047 plikow
+Worker-8: 6,244 plikow
+
+PLIKI WYJSCIOWE:
+----------------
+1. main.go - kod programu
+2. word_count_log.txt - log z wynikami (format wymagany)
+3. README.md - dokumentacja
+4. output.txt - pelny output programu
+
+FORMAT LOGU (zgodny z wymaganiami):
+-----------------------------------
+Worker-1 -> file1.txt: 3526 slow
+Worker-2 -> file2.txt: 4132 slow
+...
+Laczna liczba slow: 274824047
+
+POROWNANIE Z JAVA (ForkJoinPool):
+---------------------------------
+| Koncepcja Java      | Odpowiednik Go            |
+|---------------------|---------------------------|
+| ForkJoinPool        | WorkerPool + goroutines   |
+| RecursiveTask       | worker function           |
+| fork()              | go keyword                |
+| join()              | channel receive           |
+| ExecutorService     | WorkerPool struct         |
+
+UWAGI TECHNICZNE:
+-----------------
+- Program wykorzystuje bufio.Scanner z ScanWords
+- Kanal jobs jest buforowany (100 elementow)
+- atomic.AddInt32 zapewnia bezpieczne ID bez mutex
+- sync.WaitGroup zapewnia synchronizacje workerow
+
+=================================================================
